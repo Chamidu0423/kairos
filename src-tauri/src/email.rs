@@ -1,7 +1,7 @@
 use native_tls::TlsConnector;
 use imap;
 use serde::Serialize;
-use std::iter::FromIterator;
+use mailparse::{MailHeaderMap, ParsedMail};
 
 #[derive(Serialize)]
 pub struct EmailData {
@@ -9,6 +9,20 @@ pub struct EmailData {
     pub subject: String,
     pub from: String,
     pub date: String,
+    pub body: String,
+}
+
+fn extract_text_body(parsed: &ParsedMail) -> String {
+    if parsed.ctype.mimetype == "text/plain" {
+        return parsed.get_body().unwrap_or("".to_string());
+    }
+    for subpart in &parsed.subparts {
+        let body = extract_text_body(subpart);
+        if !body.is_empty() {
+            return body;
+        }
+    }
+    "".to_string()
 }
 
 #[tauri::command]
@@ -35,23 +49,27 @@ pub fn fetch_recent_emails(email: String, password: String, server: String) -> R
 
     imap_session.select("INBOX").map_err(|e| e.to_string())?;
 
-    let messages = imap_session.fetch("1:5", "RFC822.HEADER").map_err(|e| e.to_string())?;
+    let messages = imap_session.fetch("1:5", "RFC822").map_err(|e| e.to_string())?;
 
     let mut email_list = Vec::new();
 
     for message in messages.iter() {
-        let header = message.header().expect("header not found");
-        let parsed = mailparse::parse_header(header).unwrap(); 
+        let raw_body = message.body().expect("body not found");
         
-        let subject = parsed.get_headers().get_first_value("Subject").unwrap_or("No Subject".to_string());
-        let from = parsed.get_headers().get_first_value("From").unwrap_or("Unknown".to_string());
-        let date = parsed.get_headers().get_first_value("Date").unwrap_or("".to_string());
+        let parsed = mailparse::parse_mail(raw_body).unwrap();
+        
+        let subject = parsed.headers.get_first_value("Subject").unwrap_or("No Subject".to_string());
+        let from = parsed.headers.get_first_value("From").unwrap_or("Unknown".to_string());
+        let date = parsed.headers.get_first_value("Date").unwrap_or("".to_string());
+        
+        let body_content = extract_text_body(&parsed);
 
         email_list.push(EmailData {
             id: message.message,
             subject,
             from,
             date,
+            body: body_content,
         });
     }
 
