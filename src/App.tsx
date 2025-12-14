@@ -1,35 +1,85 @@
-import { Button } from "@/components/ui/button";
 import { useState } from "react";
+import { invoke } from "@tauri-apps/api/core";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 function App() {
-  const [count, setCount] = useState(0);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [server, setServer] = useState("imap.gmail.com");
+  const [status, setStatus] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  async function handleLogin() {
+    setLoading(true);
+    setStatus("Connecting...");
+    try {
+      const response = await invoke("test_imap_connection", {
+        email,
+        password,
+        server,
+      });
+      setStatus("✅ " + response);
+    } catch (error) {
+      setStatus("❌ Error: " + error);
+    }
+    setLoading(false);
+  }
 
   return (
-    <div className="h-screen w-full bg-black text-white flex flex-col items-center justify-center space-y-8 font-sans">
-      {/* Header Section */}
-      <div className="text-center space-y-2">
-        <h1 className="text-6xl font-bold tracking-tighter bg-gradient-to-b from-white to-gray-400 bg-clip-text text-transparent">
-          Kairos
-        </h1>
-        <p className="text-gray-400 text-lg">Your AI-Powered Second Brain</p>
-      </div>
-
-      {/* Interactive Section */}
-      <div className="flex flex-col items-center gap-4">
-        <div className="p-6 border border-gray-800 rounded-xl bg-zinc-950/50 backdrop-blur-sm shadow-2xl">
-          <p className="mb-4 text-zinc-300">System Status: <span className="text-green-500 font-mono">ONLINE</span></p>
+    <div className="h-screen w-full bg-black text-white flex items-center justify-center p-4">
+      <Card className="w-[400px] bg-zinc-900 border-zinc-800 text-zinc-100">
+        <CardHeader>
+          <CardTitle className="text-center text-2xl font-bold">Kairos Login</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <label className="text-sm text-zinc-400">IMAP Server</label>
+            <Input 
+              value={server} 
+              onChange={(e) => setServer(e.target.value)} 
+              className="bg-zinc-800 border-zinc-700 text-white" 
+            />
+            <p className="text-xs text-zinc-500">Gmail: imap.gmail.com | Outlook: outlook.office365.com</p>
+          </div>
           
-          <Button 
-            onClick={() => setCount((c) => c + 1)}
-            variant="outline" 
-            className="text-white border-gray-700 hover:bg-white hover:text-black transition-all duration-300"
-          >
-            Test Button Clicked: {count}
-          </Button>
-        </div>
-      </div>
+          <div className="space-y-2">
+            <label className="text-sm text-zinc-400">Email</label>
+            <Input 
+              placeholder="student@uni.ac.lk" 
+              value={email} 
+              onChange={(e) => setEmail(e.target.value)} 
+              className="bg-zinc-800 border-zinc-700 text-white" 
+            />
+          </div>
 
-      <p className="text-xs text-gray-600 fixed bottom-4">v1.0.0 • Powered by Tauri & Rust</p>
+          <div className="space-y-2">
+            <label className="text-sm text-zinc-400">App Password</label>
+            <Input 
+              type="password" 
+              placeholder="xxxx xxxx xxxx xxxx" 
+              value={password} 
+              onChange={(e) => setPassword(e.target.value)} 
+              className="bg-zinc-800 border-zinc-700 text-white" 
+            />
+          </div>
+
+          <Button 
+            onClick={handleLogin} 
+            disabled={loading}
+            className="w-full bg-white text-black hover:bg-gray-200"
+          >
+            {loading ? "Connecting..." : "Connect Email"}
+          </Button>
+
+          {status && (
+            <div className={`p-3 rounded text-sm ${status.startsWith("❌") ? "bg-red-900/50 text-red-200" : "bg-green-900/50 text-green-200"}`}>
+              {status}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
