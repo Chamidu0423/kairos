@@ -2,42 +2,24 @@ import { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { Button } from "@/components/ui/button";
 import { Check, Plus, RefreshCw } from "lucide-react";
+import { useApp } from "@/context/AppContext";
 
-interface Email { id: number; subject: string; from: string; date: string; body: string; }
 interface AiTask { found_task: boolean; title: string; due_date: string; priority: string; }
 
 function Scanner() {
-  const [loading, setLoading] = useState(false);
-  const [emails, setEmails] = useState<Email[]>([]);
+  const { emails, loadingEmails, refreshEmails, refreshTasks } = useApp();
+  
   const [aiResults, setAiResults] = useState<Record<number, AiTask>>({});
   const [analyzingId, setAnalyzingId] = useState<number | null>(null);
   const [savedTasks, setSavedTasks] = useState<Record<number, boolean>>({});
 
   useEffect(() => {
-    handleScan();
+    if (emails.length === 0) {
+      refreshEmails();
+    }
   }, []);
 
-  async function handleScan() {
-    const credsString = localStorage.getItem("kairos_creds");
-    if (!credsString) return;
-
-    const creds = JSON.parse(credsString);
-    
-    setLoading(true);
-    try {
-      const data = await invoke<Email[]>("fetch_recent_emails", {
-        email: creds.email,
-        password: creds.password,
-        server: creds.server,
-      });
-      setEmails(data);
-    } catch (error) {
-      console.error("Scan Error:", error);
-    }
-    setLoading(false);
-  }
-
-  async function analyzeEmail(mail: Email) {
+  async function analyzeEmail(mail: any) {
     const apiKey = prompt("Please enter your OpenRouter API Key:");
     if (!apiKey) return;
 
@@ -58,6 +40,7 @@ function Scanner() {
     try {
         await invoke("add_task", { title: task.title, dueDate: task.due_date });
         setSavedTasks(prev => ({ ...prev, [mailId]: true }));
+        refreshTasks(); 
     } catch (e) {
         alert("Failed to save: " + e);
     }
@@ -65,22 +48,26 @@ function Scanner() {
 
   return (
     <div className="space-y-6 pb-10">
-      {/* Header Section */}
       <div className="flex justify-between items-center">
         <div>
             <h1 className="text-3xl font-bold text-white tracking-tight">Inbox Scanner</h1>
             <p className="text-zinc-400 mt-1">AI-powered analysis of your recent university emails.</p>
         </div>
-        <Button onClick={handleScan} disabled={loading} variant="outline" className="border-zinc-700 hover:bg-zinc-800 text-white">
-          <RefreshCw className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-          {loading ? "Scanning..." : "Refresh Inbox"}
+        
+        <Button 
+            onClick={refreshEmails} 
+            disabled={loadingEmails} 
+            variant="outline" 
+            className="border-zinc-700 bg-white text-black hover:bg-zinc-800 hover:text-white transition-colors"
+        >
+          <RefreshCw className={`mr-2 h-4 w-4 ${loadingEmails ? "animate-spin" : ""}`} />
+          {loadingEmails ? "Scanning..." : "Refresh Inbox"}
         </Button>
       </div>
 
-      {/* Email List */}
       <div className="space-y-4">
-          {emails.length === 0 && !loading && (
-            <div className="text-zinc-500 text-center py-10">No emails found.</div>
+          {emails.length === 0 && !loadingEmails && (
+            <div className="text-zinc-500 text-center py-10">No emails found. Click Refresh.</div>
           )}
 
           {emails.map((mail) => (
@@ -96,7 +83,6 @@ function Scanner() {
                       {mail.body.length > 300 && "..."}
                   </div>
 
-                  {/* AI Result Card */}
                   {aiResults[mail.id] ? (
                     <div className={`p-4 rounded border ${aiResults[mail.id].found_task ? "bg-green-900/10 border-green-900/50" : "bg-zinc-800 border-zinc-700"}`}>
                       {aiResults[mail.id].found_task ? (
@@ -119,11 +105,17 @@ function Scanner() {
                           </Button>
                         </div>
                       ) : (
-                        <div className="text-zinc-500 text-sm flex items-center gap-2">ℹ No actionable tasks found.</div>
+                        <div className="text-zinc-500 text-sm flex items-center gap-2">ℹ️ No actionable tasks found.</div>
                       )}
                     </div>
                   ) : (
-                    <Button variant="outline" size="sm" className="text-xs border-zinc-700 hover:bg-zinc-800 text-white" onClick={() => analyzeEmail(mail)} disabled={analyzingId === mail.id}>
+                    <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="text-xs border-zinc-700 bg-white text-black hover:bg-zinc-800 hover:text-white transition-colors"
+                        onClick={() => analyzeEmail(mail)} 
+                        disabled={analyzingId === mail.id}
+                    >
                         {analyzingId === mail.id ? "✨ Analyzing..." : "✨ Analyze with AI"}
                     </Button>
                   )}

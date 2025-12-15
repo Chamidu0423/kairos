@@ -1,32 +1,9 @@
-import { useEffect, useState } from "react";
-import { invoke } from "@tauri-apps/api/core";
+import { useApp } from "@/context/AppContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, Circle, CheckCircle2, Clock } from "lucide-react";
 
-interface Task {
-  id: number;
-  title: string;
-  due_date: string | null;
-  is_completed: boolean;
-}
-
 function Tasks() {
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  async function loadTasks() {
-    try {
-      const data = await invoke<Task[]>("get_all_tasks");
-      setTasks(data);
-    } catch (error) {
-      console.error("Failed to load tasks:", error);
-    }
-    setLoading(false);
-  }
-
-  useEffect(() => {
-    loadTasks();
-  }, []);
+  const { tasks, loadingTasks } = useApp();
 
   return (
     <div className="space-y-6">
@@ -45,7 +22,7 @@ function Tasks() {
           <CardTitle className="text-lg font-medium text-zinc-300">Upcoming Deadlines</CardTitle>
         </CardHeader>
         <CardContent>
-          {loading ? (
+          {loadingTasks && tasks.length === 0 ? (
             <div className="text-center text-zinc-500 py-10 flex flex-col items-center gap-2">
                 <Clock className="animate-spin text-zinc-600" />
                 Loading tasks...
@@ -56,15 +33,12 @@ function Tasks() {
                     <CheckCircle2 className="text-zinc-600" size={32} />
                 </div>
                 <h3 className="text-lg font-medium text-white">All caught up!</h3>
-                <p className="text-zinc-500 mt-2">No pending tasks found. Scan your emails to find new ones.</p>
+                <p className="text-zinc-500 mt-2">No pending tasks found.</p>
             </div>
           ) : (
             <div className="space-y-2">
               {tasks.map((task) => (
-                <div 
-                    key={task.id} 
-                    className="group flex items-center justify-between p-4 rounded-lg bg-zinc-900 border border-zinc-800 hover:border-zinc-700 transition-all hover:bg-zinc-800/80"
-                >
+                <div key={task.id} className="group flex items-center justify-between p-4 rounded-lg bg-zinc-900 border border-zinc-800 hover:border-zinc-700 transition-all hover:bg-zinc-800/80">
                   <div className="flex items-center gap-4">
                     <button className="text-zinc-500 hover:text-green-500 transition-colors">
                         <Circle size={20} />
@@ -80,12 +54,6 @@ function Tasks() {
                             </div>
                         )}
                     </div>
-                  </div>
-                  
-                  <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                    <span className="text-xs text-zinc-600 bg-zinc-950 px-2 py-1 rounded border border-zinc-900">
-                        Pending
-                    </span>
                   </div>
                 </div>
               ))}
