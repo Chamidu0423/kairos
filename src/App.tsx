@@ -4,6 +4,7 @@ import Scanner from "./pages/Scanner";
 import Tasks from "./pages/Tasks";
 import Login from "./pages/Login";
 import { AppProvider } from "./context/AppContext";
+import { Toaster } from "sonner";
 
 function MainLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -23,6 +24,8 @@ function App() {
 
   return (
     <AppProvider>
+      <Toaster position="bottom-right" theme="dark" richColors />
+      
       <Router>
         <Routes>
           <Route path="/login" element={

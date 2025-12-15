@@ -3,6 +3,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { Button } from "@/components/ui/button";
 import { Check, Plus, RefreshCw } from "lucide-react";
 import { useApp } from "@/context/AppContext";
+import { toast } from "sonner";
 
 interface AiTask { found_task: boolean; title: string; due_date: string; priority: string; }
 
@@ -24,14 +25,23 @@ function Scanner() {
     if (!apiKey) return;
 
     setAnalyzingId(mail.id);
+    const toastId = toast.loading("Analyzing email with AI...");
+
     try {
       const result = await invoke<AiTask>("analyze_email_with_ai", {
         content: mail.body.substring(0, 4000), 
         apiKey: apiKey 
       });
       setAiResults(prev => ({ ...prev, [mail.id]: result }));
+      
+      if(result.found_task) {
+        toast.success("Task found!", { id: toastId });
+      } else {
+        toast.info("Analysis complete. No tasks found.", { id: toastId });
+      }
+
     } catch (e) {
-      alert("AI Error: " + e);
+      toast.error("AI Analysis Failed: " + e, { id: toastId });
     }
     setAnalyzingId(null);
   }
@@ -41,8 +51,11 @@ function Scanner() {
         await invoke("add_task", { title: task.title, dueDate: task.due_date });
         setSavedTasks(prev => ({ ...prev, [mailId]: true }));
         refreshTasks(); 
+        
+        toast.success("Task saved successfully!");
+        
     } catch (e) {
-        alert("Failed to save: " + e);
+        toast.error("Failed to save task: " + e);
     }
   }
 
@@ -55,7 +68,13 @@ function Scanner() {
         </div>
         
         <Button 
-            onClick={refreshEmails} 
+            onClick={() => {
+                toast.promise(refreshEmails(), {
+                    loading: 'Scanning inbox...',
+                    success: 'Inbox refreshed!',
+                    error: 'Failed to refresh inbox',
+                });
+            }} 
             disabled={loadingEmails} 
             variant="outline" 
             className="border-zinc-700 bg-white text-black hover:bg-zinc-800 hover:text-white transition-colors"
