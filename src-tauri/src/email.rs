@@ -6,11 +6,11 @@ use mailparse::{MailHeaderMap, ParsedMail};
 
 #[derive(Serialize, Clone)]
 pub struct Email {
-    id: u32,
-    subject: String,
-    from: String,
-    date: String,
-    body: String,
+    pub id: u32,
+    pub subject: String,
+    pub from: String,
+    pub date: String,
+    pub body: String,
 }
 
 fn extract_text_body(parsed: &ParsedMail) -> String {
