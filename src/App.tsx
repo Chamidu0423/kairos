@@ -1,12 +1,17 @@
+import { useState, useEffect } from "react";
 import { HashRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-import { Sidebar } from "./components/Sidebar";
-import Scanner from "./pages/Scanner";
-import Tasks from "./pages/Tasks";
-import Login from "./pages/Login";
-import { AppProvider } from "./context/AppContext";
 import { Toaster } from "sonner";
-import Settings from "./pages/Settings";
+import { AppProvider } from "@/context/AppContext";
+import { Sidebar } from "@/components/Sidebar";
+import Scanner from "@/pages/Scanner";
+import Tasks from "@/pages/Tasks";
+import Settings from "@/pages/Settings";
+import Login from "@/pages/Login";
+import NotificationPopup from "@/pages/NotificationPopup";
+import { invoke } from "@tauri-apps/api/core";
+import { isPermissionGranted, requestPermission } from "@tauri-apps/plugin-notification";
 
+// MainLayout
 function MainLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex h-screen w-full bg-black text-white font-sans antialiased selection:bg-zinc-800 selection:text-white">
@@ -20,21 +25,52 @@ function MainLayout({ children }: { children: React.ReactNode }) {
   );
 }
 
-function App() {
-  const isAuthenticated = !!localStorage.getItem("kairos_creds");
+export default function App() {
+  const [isReady, setIsReady] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    async function setupApp() {
+      try {
+        await invoke("init");
+        console.log("✅ Database initialized");
+
+        //Windows Notification Permission
+        let permissionGranted = await isPermissionGranted();
+        if (!permissionGranted) {
+          const permission = await requestPermission();
+          permissionGranted = permission === "granted";
+        }
+        console.log("🔔 Notification permission:", permissionGranted ? "granted" : "denied");
+
+      } catch (e) {
+        console.error("❌ Setup Failed:", e);
+      }
+
+      const creds = localStorage.getItem("kairos_creds");
+      setIsAuthenticated(!!creds);
+      
+      setIsReady(true);
+    }
+
+    setupApp();
+  }, []);
+
+  if (!isReady) {
+    return <div className="h-screen w-full bg-black flex items-center justify-center text-zinc-500">Initializing...</div>;
+  }
 
   return (
     <AppProvider>
+      {/* Notification Toast*/}
       <Toaster position="bottom-right" theme="dark" richColors />
 
       <Router>
         <Routes>
-          <Route path="/login" element={
-            isAuthenticated ? <Navigate to="/" /> : <Login />
-          } />
+          <Route path="/notification" element={<NotificationPopup />} />
 
-          <Route path="/settings" element={
-            isAuthenticated ? <MainLayout><Settings /></MainLayout> : <Navigate to="/login" />
+          <Route path="/login" element={
+            !isAuthenticated ? <Login /> : <Navigate to="/" />
           } />
 
           <Route path="/" element={
@@ -46,12 +82,10 @@ function App() {
           } />
 
           <Route path="/settings" element={
-            isAuthenticated ? <MainLayout><div className="p-10 text-zinc-500">Settings Page</div></MainLayout> : <Navigate to="/login" />
+            isAuthenticated ? <MainLayout><Settings /></MainLayout> : <Navigate to="/login" />
           } />
         </Routes>
       </Router>
     </AppProvider>
   );
 }
-
-export default App;
