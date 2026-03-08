@@ -21,7 +21,7 @@ export function Sidebar() {
     <div className="w-64 h-screen bg-zinc-950 border-r border-zinc-800 flex flex-col p-4">
       {/* Logo */}
       <div className="flex items-center gap-2 mb-8 px-2">
-        <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center text-black font-bold text-xl">K</div>
+        <img src="/icons/32x32.png" alt="Kairos" className="w-8 h-8 rounded-lg" />
         <span className="text-xl font-bold text-white tracking-tight">Kairos</span>
       </div>
 

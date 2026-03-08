@@ -171,6 +171,7 @@ pub fn run() {
             email::fetch_recent_emails,
             email::test_imap_connection,
             ai::analyze_email_with_ai,
+            ai::get_ai_providers,
             db::init,
             db::add_task,
             db::get_all_tasks,

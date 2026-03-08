@@ -13,7 +13,11 @@ pub fn start_background_monitor(app: AppHandle) {
             let email_res = db::get_setting("email");
             let pass_res = db::get_setting("password");
             let server_res = db::get_setting("server");
-            let api_key_res = db::get_setting("api_key");
+            let provider_res = db::get_setting("ai_provider").unwrap_or("openrouter".to_string());
+            
+            // Get provider-specific API key (fallback to generic api_key)
+            let api_key_res = db::get_setting(&format!("api_key_{}", provider_res))
+                .or_else(|_| db::get_setting("api_key"));
 
             if let (Ok(email), Ok(pass), Ok(server), Ok(api_key)) = (email_res, pass_res, server_res, api_key_res) {
                 
@@ -35,8 +39,12 @@ pub fn start_background_monitor(app: AppHandle) {
                             println!("✨ New Email Found: {}", newest_email.subject);
 
                             //AI Analysis
-                            println!("🤖 Analyzing with AI...");
-                            let ai_result = ai::analyze_email_internal(newest_email.body.chars().take(4000).collect(), api_key.clone());
+                            println!("🤖 Analyzing with AI provider: {}", provider_res);
+                            let ai_result = ai::analyze_email_internal(
+                                newest_email.body.chars().take(4000).collect(), 
+                                api_key.clone(),
+                                provider_res.clone()
+                            );
 
                             match ai_result {
                                 Ok(task) => {
