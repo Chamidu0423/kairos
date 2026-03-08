@@ -66,3 +66,136 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Email HTML content styles */
+.email-html-content {
+  color: #d4d4d8;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.email-html-content a {
+  color: rgb(93, 138, 255);
+  text-decoration: underline;
+}
+
+.email-html-content a:hover {
+  color: rgb(140, 170, 255);
+}
+
+.email-html-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  margin: 8px 0;
+}
+
+.email-html-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 8px 0;
+}
+
+.email-html-content table td,
+.email-html-content table th {
+  border: 1px solid #3f3f46;
+  padding: 8px;
+}
+
+.email-html-content blockquote {
+  border-left: 3px solid rgb(93, 138, 255);
+  padding-left: 16px;
+  margin: 16px 0;
+  color: #a1a1aa;
+}
+
+.email-html-content ul,
+.email-html-content ol {
+  padding-left: 24px;
+  margin: 8px 0;
+}
+
+.email-html-content li {
+  margin: 4px 0;
+}
+
+.email-html-content h1,
+.email-html-content h2,
+.email-html-content h3,
+.email-html-content h4 {
+  color: #fafafa;
+  margin: 16px 0 8px;
+}
+
+.email-html-content p {
+  margin: 8px 0;
+}
+
+.email-html-content hr {
+  border-color: #3f3f46;
+  margin: 16px 0;
+}
+
+/* Fix for forwarded/quoted emails */
+.email-html-content .gmail_quote,
+.email-html-content .moz-cite-prefix {
+  border-left: 2px solid #52525b;
+  padding-left: 12px;
+  margin-top: 16px;
+  color: #71717a;
+}
+
+/* Custom Scrollbar Styles */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #18181b;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #3f3f46;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #52525b;
+}
+
+/* Scrollbar for email content area */
+.email-html-content::-webkit-scrollbar,
+.max-h-\[400px\]::-webkit-scrollbar {
+  width: 6px;
+}
+
+.email-html-content::-webkit-scrollbar-track,
+.max-h-\[400px\]::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
+
+.email-html-content::-webkit-scrollbar-thumb,
+.max-h-\[400px\]::-webkit-scrollbar-thumb {
+  background: rgb(93, 138, 255);
+  border-radius: 3px;
+}
+
+.email-html-content::-webkit-scrollbar-thumb:hover,
+.max-h-\[400px\]::-webkit-scrollbar-thumb:hover {
+  background: rgb(120, 160, 255);
+}
+
+/* Firefox scrollbar support */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #3f3f46 #18181b;
+}
+
+.email-html-content,
+.max-h-\[400px\] {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(93, 138, 255) rgba(0, 0, 0, 0.2);
+}
